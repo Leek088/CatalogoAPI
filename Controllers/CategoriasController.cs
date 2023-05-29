@@ -16,22 +16,41 @@ namespace CatalogoAPI.Controllers
             _appDbContext = appDbContext;
         }
 
+        [HttpGet("{id:int}/Produtos")]
+        public ActionResult<IEnumerable<Produto>> GetProdutos(int id)
+        {
+            var queryProdutos = from categoria in _appDbContext.Categorias
+                                join produtos in _appDbContext.Produtos
+                                on categoria.Id equals produtos.CategoriaId
+                                where categoria.Id == id
+                                select produtos;
+
+            var produtosDB = queryProdutos.AsNoTracking().Take(10).ToList();
+
+            if (produtosDB.Any())
+                return StatusCode(StatusCodes.Status200OK, produtosDB);
+
+            return StatusCode(StatusCodes.Status404NotFound,
+                    "Nenhum produto encontrado!");
+
+        }
+
         [HttpGet]
         public ActionResult<IEnumerable<Categoria>> Get()
         {
-            var categorias = _appDbContext.Categorias.ToList();
+            var categorias = _appDbContext.Categorias.AsNoTracking().Take(10).ToList();
             return Ok(categorias);
         }
 
         [HttpGet("{id:int}", Name = "RecuperarCategoriaPorId")]
         public ActionResult<Categoria> Get(int id)
         {
-            var categoria = _appDbContext.Categorias.FirstOrDefault(c => c.Id == id);
+            var categoria = _appDbContext.Categorias.AsNoTracking().FirstOrDefault(c => c.Id == id);
 
             if (categoria is null)
                 return NotFound();
 
-            return Ok(categoria);
+            return StatusCode(StatusCodes.Status200OK, categoria);
         }
 
         [HttpPost]
@@ -43,20 +62,34 @@ namespace CatalogoAPI.Controllers
             _appDbContext.Categorias.Add(categoria);
             _appDbContext.SaveChanges();
 
-            return Ok(categoria);
+            return StatusCode(StatusCodes.Status200OK, categoria);
         }
 
         [HttpPut("{id:int}")]
         public ActionResult<Categoria> Put(int id, Categoria categoria)
         {
             if (id != categoria.Id)
-                return BadRequest();
+                return StatusCode(StatusCodes.Status400BadRequest);
 
             _appDbContext.Entry(categoria).State = EntityState.Modified;
             _appDbContext.SaveChanges();
 
             return new CreatedAtRouteResult("RecuperarCategoriaPorId",
                 new { id = categoria.Id }, categoria);
+        }
+
+        [HttpDelete("{id:int}")]
+        public ActionResult<Categoria> Delete(int id)
+        {
+            var categoria = _appDbContext.Categorias.FirstOrDefault(c => c.Id == id);
+
+            if (categoria is null)
+                return StatusCode(StatusCodes.Status404NotFound);
+
+            _appDbContext.Categorias.Remove(categoria);
+            _appDbContext.SaveChanges();
+
+            return StatusCode(StatusCodes.Status200OK, categoria);
         }
     }
 }

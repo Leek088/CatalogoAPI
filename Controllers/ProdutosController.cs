@@ -19,23 +19,34 @@ namespace CatalogoAPI.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<Produto>> Get()
         {
-            var produtos = _appDbContext.Produtos.ToList();
+            var queryProdutos = from produtos in _appDbContext.Produtos
+                                join categoria in _appDbContext.Categorias
+                                on produtos.CategoriaId equals categoria.Id
+                                select new { produtos, NomeCategoria = categoria.Nome };
 
-            if (produtos is null)
+            var produtosDB = queryProdutos.AsNoTracking().Take(10).ToList();
+
+            if (produtosDB is null)
                 return NoContent();
 
-            return Ok(produtos);
+            return Ok(produtosDB);
         }
 
         [HttpGet("{id:int}", Name = "OberProdutoPorId")]
         public ActionResult<Produto> Get(int id)
         {
-            var produto = _appDbContext.Produtos.FirstOrDefault(p => p.Id == id);
 
-            if (produto is null)
+            var queryProduto = from produto in _appDbContext.Produtos
+                               join categoria in _appDbContext.Categorias
+                               on produto.CategoriaId equals categoria.Id
+                               select new { produto, NomeCategoria = categoria.Nome };
+
+            var produtoDB = queryProduto.AsNoTracking().Take(10).ToList();
+
+            if (produtoDB is null)
                 return NotFound("Produdo não encontrado");
 
-            return Ok(produto);
+            return Ok(produtoDB);
         }
 
         [HttpPost]
