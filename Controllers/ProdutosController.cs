@@ -26,10 +26,11 @@ namespace CatalogoAPI.Controllers
 
             var produtosDB = queryProdutos.AsNoTracking().Take(10).ToList();
 
-            if (produtosDB is null)
-                return NoContent();
+            if (produtosDB.Any())
+                return Ok(produtosDB);
 
-            return Ok(produtosDB);
+            return StatusCode(StatusCodes.Status204NoContent,
+                "Nenhum produdo cadastrado.");
         }
 
         [HttpGet("{id:int}", Name = "OberProdutoPorId")]
@@ -39,14 +40,15 @@ namespace CatalogoAPI.Controllers
             var queryProduto = from produto in _appDbContext.Produtos
                                join categoria in _appDbContext.Categorias
                                on produto.CategoriaId equals categoria.Id
+                               where produto.Id == id
                                select new { produto, NomeCategoria = categoria.Nome };
 
-            var produtoDB = queryProduto.AsNoTracking().Take(10).ToList();
+            var produtoDB = queryProduto.AsNoTracking().ToList();
 
-            if (produtoDB is null)
-                return NotFound("Produdo não encontrado");
+            if (produtoDB.Any())
+                return Ok(produtoDB);
 
-            return Ok(produtoDB);
+            return NotFound($"Produdo de id {id}, não encontrado");
         }
 
         [HttpPost]

@@ -31,7 +31,7 @@ namespace CatalogoAPI.Controllers
                 return StatusCode(StatusCodes.Status200OK, produtosDB);
 
             return StatusCode(StatusCodes.Status404NotFound,
-                    "Nenhum produto encontrado!");
+                    $"Nenhum produto encontrado, para a categoria de id {id}");
 
         }
 
@@ -39,16 +39,24 @@ namespace CatalogoAPI.Controllers
         public ActionResult<IEnumerable<Categoria>> Get()
         {
             var categorias = _appDbContext.Categorias.AsNoTracking().Take(10).ToList();
-            return Ok(categorias);
+            
+            if (categorias.Any())
+                return Ok(categorias);
+
+            return StatusCode(StatusCodes.Status404NotFound,
+                "Nenhuma categoria cadastrada");
         }
 
         [HttpGet("{id:int}", Name = "RecuperarCategoriaPorId")]
         public ActionResult<Categoria> Get(int id)
         {
-            var categoria = _appDbContext.Categorias.AsNoTracking().FirstOrDefault(c => c.Id == id);
+            var categoria = _appDbContext.Categorias
+                            .AsNoTracking()
+                            .FirstOrDefault(c => c.Id == id);
 
             if (categoria is null)
-                return NotFound();
+                return StatusCode(StatusCodes.Status404NotFound,
+                    $"Nenhuma categoria de id {id} encontrada.");
 
             return StatusCode(StatusCodes.Status200OK, categoria);
         }
