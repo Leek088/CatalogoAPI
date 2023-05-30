@@ -17,7 +17,7 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet("{id:int}/Produtos")]
-        public ActionResult<IEnumerable<Produto>> GetProdutos(int id)
+        public async Task<ActionResult<IEnumerable<Produto>>> GetProdutosAsync(int id)
         {
             var queryProdutos = from categoria in _appDbContext.Categorias
                                 join produtos in _appDbContext.Produtos
@@ -25,7 +25,7 @@ namespace CatalogoAPI.Controllers
                                 where categoria.Id == id
                                 select produtos;
 
-            var produtosDB = queryProdutos.AsNoTracking().Take(10).ToList();
+            var produtosDB = await queryProdutos.AsNoTracking().Take(10).ToListAsync();
 
             if (produtosDB.Any())
                 return StatusCode(StatusCodes.Status200OK, produtosDB);
@@ -36,9 +36,9 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Categoria>> Get()
+        public async Task<ActionResult<IEnumerable<Categoria>>> GetAsync()
         {
-            var categorias = _appDbContext.Categorias.AsNoTracking().Take(10).ToList();
+            var categorias = await _appDbContext.Categorias.AsNoTracking().Take(10).ToListAsync();
             
             if (categorias.Any())
                 return Ok(categorias);
@@ -48,11 +48,11 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet("{id:int}", Name = "RecuperarCategoriaPorId")]
-        public ActionResult<Categoria> Get(int id)
+        public async Task<ActionResult<Categoria>> GetAsync(int id)
         {
-            var categoria = _appDbContext.Categorias
+            var categoria = await _appDbContext.Categorias
                             .AsNoTracking()
-                            .FirstOrDefault(c => c.Id == id);
+                            .FirstOrDefaultAsync(c => c.Id == id);
 
             if (categoria is null)
                 return StatusCode(StatusCodes.Status404NotFound,
@@ -62,40 +62,40 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpPost]
-        public ActionResult<Categoria> Post(Categoria categoria)
+        public async Task<ActionResult<Categoria>> PostAsync(Categoria categoria)
         {
             if (categoria is null)
                 return BadRequest();
 
-            _appDbContext.Categorias.Add(categoria);
-            _appDbContext.SaveChanges();
+            await _appDbContext.Categorias.AddAsync(categoria);
+            await _appDbContext.SaveChangesAsync();
 
             return StatusCode(StatusCodes.Status200OK, categoria);
         }
 
         [HttpPut("{id:int}")]
-        public ActionResult<Categoria> Put(int id, Categoria categoria)
+        public async Task<ActionResult<Categoria>> PutAsync(int id, Categoria categoria)
         {
             if (id != categoria.Id)
                 return StatusCode(StatusCodes.Status400BadRequest);
 
             _appDbContext.Entry(categoria).State = EntityState.Modified;
-            _appDbContext.SaveChanges();
+            await _appDbContext.SaveChangesAsync();
 
             return new CreatedAtRouteResult("RecuperarCategoriaPorId",
                 new { id = categoria.Id }, categoria);
         }
 
         [HttpDelete("{id:int}")]
-        public ActionResult<Categoria> Delete(int id)
+        public async Task<ActionResult<Categoria>> DeleteAsync(int id)
         {
-            var categoria = _appDbContext.Categorias.FirstOrDefault(c => c.Id == id);
+            var categoria = await _appDbContext.Categorias.FirstOrDefaultAsync(c => c.Id == id);
 
             if (categoria is null)
                 return StatusCode(StatusCodes.Status404NotFound);
 
             _appDbContext.Categorias.Remove(categoria);
-            _appDbContext.SaveChanges();
+            await _appDbContext.SaveChangesAsync();
 
             return StatusCode(StatusCodes.Status200OK, categoria);
         }
