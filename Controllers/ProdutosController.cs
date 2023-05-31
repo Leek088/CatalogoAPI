@@ -17,14 +17,14 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Produto>> Get()
+        public async Task<ActionResult<IEnumerable<Produto>>> GetAsync()
         {
             var queryProdutos = from produtos in _appDbContext.Produtos
                                 join categoria in _appDbContext.Categorias
                                 on produtos.CategoriaId equals categoria.Id
                                 select new { produtos, NomeCategoria = categoria.Nome };
 
-            var produtosDB = queryProdutos.AsNoTracking().Take(10).ToList();
+            var produtosDB = await queryProdutos.AsNoTracking().Take(10).ToListAsync();
 
             if (produtosDB.Any())
                 return Ok(produtosDB);
@@ -34,7 +34,7 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet("{id:int}", Name = "OberProdutoPorId")]
-        public ActionResult<Produto> Get(int id)
+        public async Task<ActionResult<Produto>> GetAsync(int id)
         {
 
             var queryProduto = from produto in _appDbContext.Produtos
@@ -43,7 +43,7 @@ namespace CatalogoAPI.Controllers
                                where produto.Id == id
                                select new { produto, NomeCategoria = categoria.Nome };
 
-            var produtoDB = queryProduto.AsNoTracking().ToList();
+            var produtoDB = await queryProduto.AsNoTracking().ToListAsync();
 
             if (produtoDB.Any())
                 return Ok(produtoDB);
@@ -52,39 +52,39 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpPost]
-        public ActionResult<Produto> Post(Produto produto)
+        public async Task<ActionResult<Produto>> PostAsync(Produto produto)
         {
             if (produto is null)
                 return BadRequest("Nenhum produto recebido");
 
-            _appDbContext.Add(produto);
-            _appDbContext.SaveChanges();
+            await _appDbContext.AddAsync(produto);
+            await _appDbContext.SaveChangesAsync();
 
             return new CreatedAtRouteResult("OberProdutoPorId", new { id = produto.Id }, produto);
         }
 
         [HttpPut("{id:int}")]
-        public ActionResult<Produto> Put(int id, Produto produto)
+        public async Task<ActionResult<Produto>> PutAsync(int id, Produto produto)
         {
             if (id != produto.Id)
                 return BadRequest();
 
             _appDbContext.Entry(produto).State = EntityState.Modified;
-            _appDbContext.SaveChanges();
+            await _appDbContext.SaveChangesAsync();
 
             return Ok(produto);
         }
 
         [HttpDelete("{id:int}")]
-        public ActionResult<Produto> Delete(int id)
+        public async Task<ActionResult<Produto>> DeleteAsync(int id)
         {
-            var produto = _appDbContext.Produtos.FirstOrDefault(p => p.Id == id);
+            var produto = await _appDbContext.Produtos.FirstOrDefaultAsync(p => p.Id == id);
 
             if (produto is null)
                 return NotFound();
 
             _appDbContext.Produtos.Remove(produto);
-            _appDbContext.SaveChanges();
+            await _appDbContext.SaveChangesAsync();
 
             return Ok(produto);
         }
