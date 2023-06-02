@@ -1,4 +1,5 @@
 using CatalogoAPI.Context;
+using CatalogoAPI.Logging;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -17,6 +18,11 @@ var connectionStringMysql = builder.Configuration.GetConnectionString("DefaultCo
 //Registrar o serviço do contexto EF Core no conteiner DI
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionStringMysql, ServerVersion.AutoDetect(connectionStringMysql)));
+
+builder.Logging.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderConfiguration
+{
+    LogLevel = LogLevel.Warning
+}));
 
 var app = builder.Build();
 
