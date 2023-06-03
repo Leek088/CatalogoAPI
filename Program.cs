@@ -21,7 +21,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Logging.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderConfiguration
 {
-    LogLevel = LogLevel.Warning
+    LogLevel = LogLevel.Debug
 }));
 
 var app = builder.Build();

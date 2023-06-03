@@ -2,7 +2,7 @@
 {
     public class CustomLoggerProviderConfiguration
     {
-        public LogLevel LogLevel { get; set; } = LogLevel.Debug;
-        public int Id { get; set; } = 0;
+        public int Id { get; set; }
+        public LogLevel LogLevel { get; set; }
     }
 }
