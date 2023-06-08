@@ -1,4 +1,6 @@
+using AutoMapper;
 using CatalogoAPI.Context;
+using CatalogoAPI.DTOs.Mappings;
 using CatalogoAPI.Logging;
 using CatalogoAPI.Repositories;
 using CatalogoAPI.Repositories.Interfaces;
@@ -19,7 +21,7 @@ var connectionStringMysql = builder.Configuration.GetConnectionString("DefaultCo
 
 //Registrar o serviço do contexto EF Core no conteiner DI
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionStringMysql, 
+    options.UseMySql(connectionStringMysql,
     ServerVersion.AutoDetect(connectionStringMysql)));
 
 builder.Services.AddScoped<IUnityOfWork, UnityOfWork>();
@@ -28,6 +30,15 @@ builder.Logging.AddProvider(new CustomLoggerProvider(new CustomLoggerProviderCon
 {
     LogLevel = LogLevel.Debug
 }));
+
+var mappingConfig = new MapperConfiguration(mc =>
+{
+    mc.AddProfile(new MappingProfile());
+});
+
+IMapper mapper = mappingConfig.CreateMapper();
+
+builder.Services.AddSingleton(mapper);
 
 var app = builder.Build();
 
