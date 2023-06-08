@@ -1,7 +1,7 @@
-﻿using CatalogoAPI.Context;
-using CatalogoAPI.Models;
+﻿using CatalogoAPI.Models;
+using CatalogoAPI.Repositories;
+using CatalogoAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CatalogoAPI.Controllers
 {
@@ -9,37 +9,31 @@ namespace CatalogoAPI.Controllers
     [ApiController]
     public class CategoriasController : ControllerBase
     {
-        private readonly AppDbContext _appDbContext;
+        private readonly IUnityOfWork _unityOfWork;
 
-        public CategoriasController(AppDbContext appDbContext)
+        public CategoriasController(IUnityOfWork unityOfWork)
         {
-            _appDbContext = appDbContext;
+            _unityOfWork = unityOfWork;
         }
 
-        [HttpGet("{id:int}/Produtos")]
-        public async Task<ActionResult<IEnumerable<Produto>>> GetProdutosAsync(int id)
+        [HttpGet("Produtos")]
+        public ActionResult<IEnumerable<Produto>> GetCategoriasComProdutos()
         {
-            var queryProdutos = from categoria in _appDbContext.Categorias
-                                join produtos in _appDbContext.Produtos
-                                on categoria.Id equals produtos.CategoriaId
-                                where categoria.Id == id
-                                select produtos;
+            var categoriasComProdutos = _unityOfWork.CategoriaRepository.GetCategoriasComProdutos();
 
-            var produtosDB = await queryProdutos.AsNoTracking().Take(10).ToListAsync();
-
-            if (produtosDB.Any())
-                return StatusCode(StatusCodes.Status200OK, produtosDB);
+            if (categoriasComProdutos.Any())
+                return StatusCode(StatusCodes.Status200OK, categoriasComProdutos);
 
             return StatusCode(StatusCodes.Status404NotFound,
-                    $"Nenhum produto encontrado, para a categoria de id {id}");
+                    $"Nenhum resultado encontrado");
 
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Categoria>>> GetAsync()
+        public ActionResult<IEnumerable<Categoria>> Get()
         {
-            var categorias = await _appDbContext.Categorias.AsNoTracking().Take(10).ToListAsync();
-            
+            var categorias = _unityOfWork.CategoriaRepository.GET();
+
             if (categorias.Any())
                 return Ok(categorias);
 
@@ -48,11 +42,9 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet("{id:int}", Name = "RecuperarCategoriaPorId")]
-        public async Task<ActionResult<Categoria>> GetAsync(int id)
+        public ActionResult<Categoria> Get(int id)
         {
-            var categoria = await _appDbContext.Categorias
-                            .AsNoTracking()
-                            .FirstOrDefaultAsync(c => c.Id == id);
+            var categoria = _unityOfWork.CategoriaRepository.GetById(c => c.Id == id);
 
             if (categoria is null)
                 return StatusCode(StatusCodes.Status404NotFound,
@@ -62,40 +54,40 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Categoria>> PostAsync(Categoria categoria)
+        public ActionResult<Categoria> Post(Categoria categoria)
         {
             if (categoria is null)
                 return BadRequest();
 
-            await _appDbContext.Categorias.AddAsync(categoria);
-            await _appDbContext.SaveChangesAsync();
+            _unityOfWork.CategoriaRepository.Add(categoria);
+            _unityOfWork.Commit();
 
             return StatusCode(StatusCodes.Status200OK, categoria);
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<Categoria>> PutAsync(int id, Categoria categoria)
+        public ActionResult<Categoria> Put(int id, Categoria categoria)
         {
             if (id != categoria.Id)
                 return StatusCode(StatusCodes.Status400BadRequest);
 
-            _appDbContext.Entry(categoria).State = EntityState.Modified;
-            await _appDbContext.SaveChangesAsync();
+            _unityOfWork.CategoriaRepository.Update(categoria);
+            _unityOfWork.Commit();
 
             return new CreatedAtRouteResult("RecuperarCategoriaPorId",
                 new { id = categoria.Id }, categoria);
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult<Categoria>> DeleteAsync(int id)
+        public ActionResult<Categoria> Delete(int id)
         {
-            var categoria = await _appDbContext.Categorias.FirstOrDefaultAsync(c => c.Id == id);
+            var categoria = _unityOfWork.CategoriaRepository.GetById(c => c.Id == id);
 
             if (categoria is null)
                 return StatusCode(StatusCodes.Status404NotFound);
 
-            _appDbContext.Categorias.Remove(categoria);
-            await _appDbContext.SaveChangesAsync();
+            _unityOfWork.CategoriaRepository.Delete(categoria);
+            _unityOfWork.Commit();
 
             return StatusCode(StatusCodes.Status200OK, categoria);
         }

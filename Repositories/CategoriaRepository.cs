@@ -2,6 +2,7 @@
 using CatalogoAPI.Models;
 using CatalogoAPI.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace CatalogoAPI.Repositories
 {
@@ -9,9 +10,9 @@ namespace CatalogoAPI.Repositories
     {
         public CategoriaRepository(AppDbContext context) : base(context) { }
 
-        public IEnumerable<Categoria> GetProdutosDaCategoria()
+        public IEnumerable<Categoria> GetCategoriasComProdutos()
         {
-            return GET().Include(p => p.Produtos).ToList();
+            return GET().Include(c => c.Produtos);
         }
     }
 }

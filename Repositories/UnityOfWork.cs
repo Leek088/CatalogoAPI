@@ -25,7 +25,7 @@ namespace CatalogoAPI.Repositories
             }
         }
 
-        public ICategoriaRepository ICategoriaRepository
+        public ICategoriaRepository CategoriaRepository
         {
             get
             {

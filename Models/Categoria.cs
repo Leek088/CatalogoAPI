@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace CatalogoAPI.Models;
 
 public class Categoria
-{  
+{
 
     [Key]
     public int Id { get; set; }
@@ -20,6 +20,6 @@ public class Categoria
     public string? ImagemUrl { get; set; }
 
     //Propriedade de navegação
-    [JsonIgnore]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ICollection<Produto>? Produtos { get; set; }
 }

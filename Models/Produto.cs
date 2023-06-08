@@ -44,6 +44,6 @@ public class Produto
     public int CategoriaId { get; set; }
 
     //Propriedade de navegação
-    [JsonIgnore]
+    [JsonIgnore(Condition =JsonIgnoreCondition.WhenWritingNull)]
     public Categoria? Categoria { get; set; }
 }

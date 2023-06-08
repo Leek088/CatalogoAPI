@@ -1,7 +1,6 @@
-﻿using CatalogoAPI.Context;
-using CatalogoAPI.Models;
+﻿using CatalogoAPI.Models;
+using CatalogoAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CatalogoAPI.Controllers
 {
@@ -9,22 +8,41 @@ namespace CatalogoAPI.Controllers
     [ApiController]
     public class ProdutosController : ControllerBase
     {
-        private readonly AppDbContext _appDbContext;
+        private readonly IUnityOfWork _unityOfWork;
 
-        public ProdutosController(AppDbContext appDbContext)
+        public ProdutosController(IUnityOfWork unityOfWork)
         {
-            _appDbContext = appDbContext;
+            _unityOfWork = unityOfWork;
+        }
+
+        [HttpGet("Categoria/{id:int}")]
+        public ActionResult<IEnumerable<Produto>> GetProdutoPreco(int id)
+        {
+            var produtoDB = _unityOfWork.ProdutoRepository.GetProdutosPorCategoria(p => p.CategoriaId == id);
+
+            if (produtoDB.Any())
+                return Ok(produtoDB);
+
+            else
+                return NotFound("Nenhum produto encontrado");
+        }
+
+        [HttpGet("Preco")]
+        public ActionResult<IEnumerable<Produto>> GetProdutoPreco()
+        {
+            var produtoDB = _unityOfWork.ProdutoRepository.GetProdutosPorPreco();
+
+            if (produtoDB.Any())
+                return Ok(produtoDB);
+
+            else
+                return NotFound("Nenhum produto encontrado");
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Produto>>> GetAsync()
+        public ActionResult<IEnumerable<Produto>> Get()
         {
-            var queryProdutos = from produtos in _appDbContext.Produtos
-                                join categoria in _appDbContext.Categorias
-                                on produtos.CategoriaId equals categoria.Id
-                                select new { produtos, NomeCategoria = categoria.Nome };
-
-            var produtosDB = await queryProdutos.AsNoTracking().Take(10).ToListAsync();
+            var produtosDB = _unityOfWork.ProdutoRepository.GET();
 
             if (produtosDB.Any())
                 return Ok(produtosDB);
@@ -34,57 +52,51 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet("{id:int}", Name = "OberProdutoPorId")]
-        public async Task<ActionResult<Produto>> GetAsync(int id)
+        public ActionResult<Produto> Get(int id)
         {
+            var produtoDB = _unityOfWork.ProdutoRepository.GetById(p => p.Id == id);
 
-            var queryProduto = from produto in _appDbContext.Produtos
-                               join categoria in _appDbContext.Categorias
-                               on produto.CategoriaId equals categoria.Id
-                               where produto.Id == id
-                               select new { produto, NomeCategoria = categoria.Nome };
+            if (produtoDB is null)
+                return NotFound($"Produdo de id {id}, não encontrado");
 
-            var produtoDB = await queryProduto.AsNoTracking().ToListAsync();
+            return Ok(produtoDB);
 
-            if (produtoDB.Any())
-                return Ok(produtoDB);
-
-            return NotFound($"Produdo de id {id}, não encontrado");
         }
 
         [HttpPost]
-        public async Task<ActionResult<Produto>> PostAsync(Produto produto)
+        public ActionResult<Produto> Post(Produto produto)
         {
             if (produto is null)
                 return BadRequest("Nenhum produto recebido");
 
-            await _appDbContext.AddAsync(produto);
-            await _appDbContext.SaveChangesAsync();
+            _unityOfWork.ProdutoRepository.Add(produto);
+            _unityOfWork.Commit();
 
             return new CreatedAtRouteResult("OberProdutoPorId", new { id = produto.Id }, produto);
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult<Produto>> PutAsync(int id, Produto produto)
+        public ActionResult<Produto> Put(int id, Produto produto)
         {
             if (id != produto.Id)
                 return BadRequest();
 
-            _appDbContext.Entry(produto).State = EntityState.Modified;
-            await _appDbContext.SaveChangesAsync();
+            _unityOfWork.ProdutoRepository.Update(produto);
+            _unityOfWork.Commit();
 
             return Ok(produto);
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult<Produto>> DeleteAsync(int id)
+        public ActionResult<Produto> Delete(int id)
         {
-            var produto = await _appDbContext.Produtos.FirstOrDefaultAsync(p => p.Id == id);
+            var produto = _unityOfWork.ProdutoRepository.GetById(p => p.Id == id);
 
             if (produto is null)
                 return NotFound();
 
-            _appDbContext.Produtos.Remove(produto);
-            await _appDbContext.SaveChangesAsync();
+            _unityOfWork.ProdutoRepository.Delete(produto);
+            _unityOfWork.Commit();
 
             return Ok(produto);
         }
