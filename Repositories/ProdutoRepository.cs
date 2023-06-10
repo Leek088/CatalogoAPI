@@ -9,12 +9,12 @@ namespace CatalogoAPI.Repositories
     {
         public ProdutoRepository(AppDbContext context) : base(context) { }
 
-        public IEnumerable<Produto> GetProdutosPorCategoria(Expression<Func<Produto, bool>> predicate)
+        public IEnumerable<Produto> GetProductsByCategoryId(Expression<Func<Produto, bool>> predicate)
         {
             return GET().Where(predicate);
         }
 
-        public IEnumerable<Produto> GetProdutosPorPreco()
+        public IEnumerable<Produto> GetProductsBySortLowPrice()
         {
            return GET().OrderBy(p => p.Preco).ToList();
         }

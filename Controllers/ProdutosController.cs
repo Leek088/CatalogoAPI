@@ -20,31 +20,33 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet("Categoria/{id:int}")]
-        public ActionResult<IQueryable<ProdutoDTO>> GetProdutosPorCategoria(int id)
+        public ActionResult<IQueryable<ProdutoDTO>> GetProductsByCategoryId(int id)
         {
-            var produtoDB = _unityOfWork.ProdutoRepository.GetProdutosPorCategoria(p => p.CategoriaId == id);
+            var produtoDB = _unityOfWork.ProdutoRepository.GetProductsByCategoryId(p => p.CategoriaId == id);
 
-            if (produtoDB.Any())
+            if (produtoDB is null || !produtoDB.Any())
             {
-                var produtoDTO = _mapper.Map<List<ProdutoDTO>>(produtoDB);
-                return Ok(produtoDB);
+                return NotFound("Nenhum produto encontrado");
+
             }
 
-            return NotFound("Nenhum produto encontrado");
+            var produtoDTO = _mapper.Map<List<ProdutoDTO>>(produtoDB);
+            return Ok(produtoDB);
         }
 
-        [HttpGet("Preco")]
-        public ActionResult<IQueryable<ProdutoDTO>> GetProdutoOrderByPreco()
+        [HttpGet("Preco/Menor")]
+        public ActionResult<IQueryable<ProdutoDTO>> GetProductsBySortLowPrice()
         {
-            var produtoDB = _unityOfWork.ProdutoRepository.GetProdutosPorPreco();
+            var produtoDB = _unityOfWork.ProdutoRepository.GetProductsBySortLowPrice();
 
-            if (produtoDB.Any())
+            if (produtoDB is null || !produtoDB.Any())
             {
-                var produtoDTO = _mapper.Map<List<ProdutoDTO>>(produtoDB);
-                return Ok(produtoDTO);
+                return NotFound("Nenhum produto encontrado");
+
             }
 
-            return NotFound("Nenhum produto encontrado");
+            var produtoDTO = _mapper.Map<List<ProdutoDTO>>(produtoDB);
+            return Ok(produtoDTO);
         }
 
         [HttpGet]
@@ -52,14 +54,15 @@ namespace CatalogoAPI.Controllers
         {
             var produtosDB = _unityOfWork.ProdutoRepository.GET();
 
-            if (produtosDB.Any())
+            if (produtosDB is null || !produtosDB.Any())
             {
-                var produtosDTO = _mapper.Map<List<ProdutoDTO>>(produtosDB);
-                return Ok(produtosDTO);
+                return StatusCode(StatusCodes.Status204NoContent,
+                "Nenhum produdo cadastrado.");
+
             }
 
-            return StatusCode(StatusCodes.Status204NoContent,
-                "Nenhum produdo cadastrado.");
+            var produtosDTO = _mapper.Map<List<ProdutoDTO>>(produtosDB);
+            return Ok(produtosDTO);
         }
 
         [HttpGet("{id:int}", Name = "OberProdutoPorId")]
@@ -86,13 +89,15 @@ namespace CatalogoAPI.Controllers
             _unityOfWork.ProdutoRepository.Add(produtoDB);
             _unityOfWork.Commit();
 
+            produtoDTO = _mapper.Map<ProdutoDTO>(produtoDB);
+
             return new CreatedAtRouteResult("OberProdutoPorId", new { id = produtoDTO.Id }, produtoDTO);
         }
 
         [HttpPut("{id:int}")]
         public ActionResult<ProdutoDTO> Put(int id, ProdutoDTO produtoDTO)
         {
-            if (id != produtoDTO.Id)
+            if (produtoDTO is null || id != produtoDTO.Id)
                 return BadRequest();
 
             var produtoDB = _mapper.Map<Produto>(produtoDTO);

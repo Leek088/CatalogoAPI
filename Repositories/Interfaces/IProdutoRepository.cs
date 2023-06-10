@@ -5,7 +5,7 @@ namespace CatalogoAPI.Repositories.Interfaces
 {
     public interface IProdutoRepository : IRepository<Produto>
     {
-        IEnumerable<Produto> GetProdutosPorPreco();
-        IEnumerable<Produto> GetProdutosPorCategoria(Expression<Func<Produto, bool>> predicate);
+        IEnumerable<Produto> GetProductsBySortLowPrice();
+        IEnumerable<Produto> GetProductsByCategoryId(Expression<Func<Produto, bool>> predicate);
     }
 }

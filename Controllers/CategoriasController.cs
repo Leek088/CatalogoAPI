@@ -1,5 +1,6 @@
-﻿using CatalogoAPI.Models;
-using CatalogoAPI.Repositories;
+﻿using AutoMapper;
+using CatalogoAPI.DTOs;
+using CatalogoAPI.Models;
 using CatalogoAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,86 +11,103 @@ namespace CatalogoAPI.Controllers
     public class CategoriasController : ControllerBase
     {
         private readonly IUnityOfWork _unityOfWork;
+        private readonly IMapper _mapper;
 
-        public CategoriasController(IUnityOfWork unityOfWork)
+        public CategoriasController(IUnityOfWork unityOfWork, IMapper mapper)
         {
             _unityOfWork = unityOfWork;
+            _mapper = mapper;
         }
 
         [HttpGet("Produtos")]
-        public ActionResult<IEnumerable<Produto>> GetCategoriasComProdutos()
+        public ActionResult<IQueryable<CategoriaDTO>> GetCategoriasComProdutos()
         {
-            var categoriasComProdutos = _unityOfWork.CategoriaRepository.GetCategoriasComProdutos();
+            var categoriasDB = _unityOfWork.CategoriaRepository.GetCategoriasComProdutos();
 
-            if (categoriasComProdutos.Any())
-                return StatusCode(StatusCodes.Status200OK, categoriasComProdutos);
+            if (categoriasDB is null || !categoriasDB.Any())
+                return StatusCode(StatusCodes.Status404NotFound,
+                 $"Nenhum resultado encontrado");
 
-            return StatusCode(StatusCodes.Status404NotFound,
-                    $"Nenhum resultado encontrado");
+            var categoriasDTO = _mapper.Map<List<CategoriaDTO>>(categoriasDB);
 
+            return StatusCode(StatusCodes.Status200OK, categoriasDTO);
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Categoria>> Get()
+        public ActionResult<IQueryable<CategoriaDTO>> Get()
         {
-            var categorias = _unityOfWork.CategoriaRepository.GET();
+            var categoriasDB = _unityOfWork.CategoriaRepository.GET();
 
-            if (categorias.Any())
-                return Ok(categorias);
-
+            if (categoriasDB is null || !categoriasDB.Any())
             return StatusCode(StatusCodes.Status404NotFound,
                 "Nenhuma categoria cadastrada");
+
+            var categoriasDTO = _mapper.Map<List<CategoriaDTO>>(categoriasDB);
+
+            return Ok(categoriasDTO);
         }
 
         [HttpGet("{id:int}", Name = "RecuperarCategoriaPorId")]
-        public ActionResult<Categoria> Get(int id)
+        public ActionResult<CategoriaDTO> Get(int id)
         {
-            var categoria = _unityOfWork.CategoriaRepository.GetById(c => c.Id == id);
+            var categoriaDB = _unityOfWork.CategoriaRepository.GetById(c => c.Id == id);
 
-            if (categoria is null)
+            if (categoriaDB is null)
                 return StatusCode(StatusCodes.Status404NotFound,
                     $"Nenhuma categoria de id {id} encontrada.");
 
-            return StatusCode(StatusCodes.Status200OK, categoria);
+            var categoriaDTO = _mapper.Map<CategoriaDTO>(categoriaDB);
+
+            return StatusCode(StatusCodes.Status200OK, categoriaDTO);
         }
 
         [HttpPost]
-        public ActionResult<Categoria> Post(Categoria categoria)
+        public ActionResult<CategoriaDTO> Post(CategoriaDTO categoriaDTO)
         {
-            if (categoria is null)
+            if (categoriaDTO is null)
                 return BadRequest();
 
-            _unityOfWork.CategoriaRepository.Add(categoria);
+            var categoriaDB = _mapper.Map<Categoria>(categoriaDTO);
+
+            _unityOfWork.CategoriaRepository.Add(categoriaDB);
             _unityOfWork.Commit();
 
-            return StatusCode(StatusCodes.Status200OK, categoria);
+            categoriaDTO = _mapper.Map<CategoriaDTO>(categoriaDB);
+
+            return StatusCode(StatusCodes.Status200OK, categoriaDTO);
         }
 
         [HttpPut("{id:int}")]
-        public ActionResult<Categoria> Put(int id, Categoria categoria)
+        public ActionResult<CategoriaDTO> Put(int id, CategoriaDTO categoriaDTO)
         {
-            if (id != categoria.Id)
+            if (categoriaDTO is null || id != categoriaDTO.Id)
                 return StatusCode(StatusCodes.Status400BadRequest);
 
-            _unityOfWork.CategoriaRepository.Update(categoria);
+            var categoriaDB = _mapper.Map<Categoria>(categoriaDTO);
+
+            _unityOfWork.CategoriaRepository.Update(categoriaDB);
             _unityOfWork.Commit();
 
+            categoriaDTO = _mapper.Map<CategoriaDTO>(categoriaDB);
+
             return new CreatedAtRouteResult("RecuperarCategoriaPorId",
-                new { id = categoria.Id }, categoria);
+                new { id = categoriaDTO.Id }, categoriaDTO);
         }
 
         [HttpDelete("{id:int}")]
-        public ActionResult<Categoria> Delete(int id)
+        public ActionResult<CategoriaDTO> Delete(int id)
         {
-            var categoria = _unityOfWork.CategoriaRepository.GetById(c => c.Id == id);
+            var categoriaDB = _unityOfWork.CategoriaRepository.GetById(c => c.Id == id);
 
-            if (categoria is null)
+            if (categoriaDB is null)
                 return StatusCode(StatusCodes.Status404NotFound);
 
-            _unityOfWork.CategoriaRepository.Delete(categoria);
+            _unityOfWork.CategoriaRepository.Delete(categoriaDB);
             _unityOfWork.Commit();
 
-            return StatusCode(StatusCodes.Status200OK, categoria);
+            var categoriaDTO = _mapper.Map<CategoriaDTO>(categoriaDB);
+
+            return StatusCode(StatusCodes.Status200OK, categoriaDTO);
         }
     }
 }
