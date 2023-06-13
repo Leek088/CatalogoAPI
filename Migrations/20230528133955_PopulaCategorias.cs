@@ -11,8 +11,14 @@ namespace CatalogoAPI.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("INSERT INTO categorias (Nome, ImagemUrl) VALUES ('Bebidas', 'bebidas.jpg')");
+
             migrationBuilder.Sql("INSERT INTO categorias (Nome, ImagemUrl) VALUES ('Lanches', 'lanches.jpg')");
+
             migrationBuilder.Sql("INSERT INTO categorias (Nome, ImagemUrl) VALUES ('Sobremesas', 'sobremesas.jpg')");
+
+            migrationBuilder.Sql("INSERT INTO categorias (Nome, ImagemUrl) VALUES ('Massas', 'massa.jpg')");
+
+            migrationBuilder.Sql("INSERT INTO categorias (Nome, ImagemUrl) VALUES ('Tira Gosto', 'tiragosto.jpg')");
         }
 
         /// <inheritdoc />

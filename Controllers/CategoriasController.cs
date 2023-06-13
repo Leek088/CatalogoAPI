@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using CatalogoAPI.DTOs;
 using CatalogoAPI.Models;
+using CatalogoAPI.Pagination;
 using CatalogoAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace CatalogoAPI.Controllers
 {
@@ -43,6 +45,28 @@ namespace CatalogoAPI.Controllers
                 "Nenhuma categoria cadastrada");
 
             var categoriasDTO = _mapper.Map<List<CategoriaDTO>>(categoriasDB);
+
+            return Ok(categoriasDTO);
+        }
+
+        [HttpGet("Paginada")]
+        public ActionResult<IQueryable<CategoriaDTO>> GetCategoryPaginated([FromQuery] CategoriaParameters categoriaParameters)
+        {
+            var categorias = _unityOfWork.CategoriaRepository.GetAllPaginated(categoriaParameters);
+
+            var metadata = new
+            {
+                categorias.TotalCount,
+                categorias.PageSize,
+                categorias.CurrentPage,
+                categorias.TotalPages,
+                categorias.HasNext,
+                categorias.HasPrevious
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+            var categoriasDTO = _mapper.Map<List<CategoriaDTO>>(categorias);
 
             return Ok(categoriasDTO);
         }

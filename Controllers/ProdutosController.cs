@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using CatalogoAPI.DTOs;
 using CatalogoAPI.Models;
+using CatalogoAPI.Pagination;
 using CatalogoAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace CatalogoAPI.Controllers
 {
@@ -62,6 +64,28 @@ namespace CatalogoAPI.Controllers
             }
 
             var produtosDTO = _mapper.Map<List<ProdutoDTO>>(produtosDB);
+            return Ok(produtosDTO);
+        }
+
+        [HttpGet("Paginado")]
+        public ActionResult<IQueryable<ProdutoDTO>> GetProductsPaginated([FromQuery] ProdutosParameters produtosParameters)
+        {
+            var produtos = _unityOfWork.ProdutoRepository.GetAllPaginated(produtosParameters);
+
+            var metadata = new
+            {
+                produtos.TotalCount,
+                produtos.PageSize,
+                produtos.CurrentPage,
+                produtos.TotalPages,
+                produtos.HasNext,
+                produtos.HasPrevious
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+            var produtosDTO = _mapper.Map<List<ProdutoDTO>>(produtos);
+
             return Ok(produtosDTO);
         }
 

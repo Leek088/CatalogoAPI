@@ -1,10 +1,11 @@
 ﻿using CatalogoAPI.Models;
-using System.Linq.Expressions;
+using CatalogoAPI.Pagination;
 
 namespace CatalogoAPI.Repositories.Interfaces
 {
     public interface ICategoriaRepository : IRepository<Categoria>
     {
+        PagedList<Categoria> GetAllPaginated(CategoriaParameters categoriaParameters);
         IEnumerable<Categoria> GetCategoriasComProdutos();
     }
 }
