@@ -6,8 +6,8 @@ namespace CatalogoAPI.Repositories.Interfaces
 {
     public interface IProdutoRepository : IRepository<Produto>
     {
-        PagedList<Produto> GetAllPaginated(ProdutosParameters produtosParameters);
-        IEnumerable<Produto> GetProductsBySortLowPrice();
-        IEnumerable<Produto> GetProductsByCategoryId(Expression<Func<Produto, bool>> predicate);
+        Task<PagedList<Produto>> GetAllPaginatedAsync(ProdutosParameters produtosParameters);
+        IQueryable<Produto> GetProductsBySortLowPrice();
+        IQueryable<Produto> GetProductsByCategoryId(Expression<Func<Produto, bool>> predicate);
     }
 }

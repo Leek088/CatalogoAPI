@@ -14,14 +14,15 @@ namespace CatalogoAPI.Repositories
             _context = context;
         }
 
-        public IQueryable<T> GET()
+        public IQueryable<T> Get()
         {
-            return _context.Set<T>().AsNoTracking();
+            return  _context.Set<T>().AsNoTracking();
         }
 
-        public T? GetById(Expression<Func<T, bool>> predicate)
+        public async Task<T> GetByIdAsync(Expression<Func<T, bool>> predicate)
         {
-            return _context.Set<T>().AsNoTracking().SingleOrDefault(predicate);
+            var result = await _context.Set<T>().AsNoTracking().SingleOrDefaultAsync(predicate);
+            return result!;
         }
 
         public void Add(T entity)

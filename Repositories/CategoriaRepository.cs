@@ -8,17 +8,17 @@ namespace CatalogoAPI.Repositories
 {
     public class CategoriaRepository : Repository<Categoria>, ICategoriaRepository
     {
-        public CategoriaRepository(AppDbContext context) : base(context) { }
+        public CategoriaRepository(AppDbContext context) : base(context) { }       
 
-        public PagedList<Categoria> GetAllPaginated(CategoriaParameters categoriaParameters)
+        public async Task<PagedList<Categoria>> GetAllPaginatedAsync(CategoriaParameters categoriaParameters)
         {
-            return PagedList<Categoria>.ToPagedList(GET().OrderBy(c => c.Nome),
-                            categoriaParameters.PageNumber, categoriaParameters.PageSize);
+            return await PagedList<Categoria>.ToPagedListAsync(Get().OrderBy(c => c.Nome),
+                           categoriaParameters.PageNumber, categoriaParameters.PageSize);
         }
 
-        public IEnumerable<Categoria> GetCategoriasComProdutos()
+        public IQueryable<Categoria> GetCategoriasComProdutos()
         {
-            return GET().Include(c => c.Produtos);
+            return Get().Include(c => c.Produtos);
         }
     }
 }

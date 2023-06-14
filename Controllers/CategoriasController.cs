@@ -4,6 +4,7 @@ using CatalogoAPI.Models;
 using CatalogoAPI.Pagination;
 using CatalogoAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
 namespace CatalogoAPI.Controllers
@@ -22,9 +23,9 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet("Produtos")]
-        public ActionResult<IQueryable<CategoriaDTO>> GetCategoriasComProdutos()
+        public async Task<ActionResult<IQueryable<CategoriaDTO>>> GetCategoriasComProdutosAsync()
         {
-            var categoriasDB = _unityOfWork.CategoriaRepository.GetCategoriasComProdutos();
+            var categoriasDB = await _unityOfWork.CategoriaRepository.GetCategoriasComProdutos().ToListAsync();
 
             if (categoriasDB is null || !categoriasDB.Any())
                 return StatusCode(StatusCodes.Status404NotFound,
@@ -36,13 +37,13 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IQueryable<CategoriaDTO>> Get()
+        public async Task<ActionResult<IQueryable<CategoriaDTO>>> GetAsync()
         {
-            var categoriasDB = _unityOfWork.CategoriaRepository.GET();
+            var categoriasDB = await _unityOfWork.CategoriaRepository.Get().ToListAsync();
 
             if (categoriasDB is null || !categoriasDB.Any())
-            return StatusCode(StatusCodes.Status404NotFound,
-                "Nenhuma categoria cadastrada");
+                return StatusCode(StatusCodes.Status404NotFound,
+                    "Nenhuma categoria cadastrada");
 
             var categoriasDTO = _mapper.Map<List<CategoriaDTO>>(categoriasDB);
 
@@ -50,9 +51,9 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet("Paginada")]
-        public ActionResult<IQueryable<CategoriaDTO>> GetCategoryPaginated([FromQuery] CategoriaParameters categoriaParameters)
+        public async Task<ActionResult<IQueryable<CategoriaDTO>>> GetCategoryPaginatedAsync([FromQuery] CategoriaParameters categoriaParameters)
         {
-            var categorias = _unityOfWork.CategoriaRepository.GetAllPaginated(categoriaParameters);
+            var categorias = await _unityOfWork.CategoriaRepository.GetAllPaginatedAsync(categoriaParameters);
 
             var metadata = new
             {
@@ -72,9 +73,9 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpGet("{id:int}", Name = "RecuperarCategoriaPorId")]
-        public ActionResult<CategoriaDTO> Get(int id)
+        public async Task<ActionResult<CategoriaDTO>> GetAsync(int id)
         {
-            var categoriaDB = _unityOfWork.CategoriaRepository.GetById(c => c.Id == id);
+            var categoriaDB = await _unityOfWork.CategoriaRepository.GetByIdAsync(c => c.Id == id);
 
             if (categoriaDB is null)
                 return StatusCode(StatusCodes.Status404NotFound,
@@ -86,7 +87,7 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpPost]
-        public ActionResult<CategoriaDTO> Post(CategoriaDTO categoriaDTO)
+        public async Task<ActionResult<CategoriaDTO>> PostAsync(CategoriaDTO categoriaDTO)
         {
             if (categoriaDTO is null)
                 return BadRequest();
@@ -94,7 +95,7 @@ namespace CatalogoAPI.Controllers
             var categoriaDB = _mapper.Map<Categoria>(categoriaDTO);
 
             _unityOfWork.CategoriaRepository.Add(categoriaDB);
-            _unityOfWork.Commit();
+            await _unityOfWork.CommitAsync();
 
             categoriaDTO = _mapper.Map<CategoriaDTO>(categoriaDB);
 
@@ -102,7 +103,7 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public ActionResult<CategoriaDTO> Put(int id, CategoriaDTO categoriaDTO)
+        public async Task<ActionResult<CategoriaDTO>> PutAsync(int id, CategoriaDTO categoriaDTO)
         {
             if (categoriaDTO is null || id != categoriaDTO.Id)
                 return StatusCode(StatusCodes.Status400BadRequest);
@@ -110,7 +111,7 @@ namespace CatalogoAPI.Controllers
             var categoriaDB = _mapper.Map<Categoria>(categoriaDTO);
 
             _unityOfWork.CategoriaRepository.Update(categoriaDB);
-            _unityOfWork.Commit();
+            await _unityOfWork.CommitAsync();
 
             categoriaDTO = _mapper.Map<CategoriaDTO>(categoriaDB);
 
@@ -119,15 +120,15 @@ namespace CatalogoAPI.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        public ActionResult<CategoriaDTO> Delete(int id)
+        public async Task<ActionResult<CategoriaDTO>> DeleteAsync(int id)
         {
-            var categoriaDB = _unityOfWork.CategoriaRepository.GetById(c => c.Id == id);
+            var categoriaDB = await _unityOfWork.CategoriaRepository.GetByIdAsync(c => c.Id == id);
 
             if (categoriaDB is null)
                 return StatusCode(StatusCodes.Status404NotFound);
 
             _unityOfWork.CategoriaRepository.Delete(categoriaDB);
-            _unityOfWork.Commit();
+            await _unityOfWork.CommitAsync();
 
             var categoriaDTO = _mapper.Map<CategoriaDTO>(categoriaDB);
 

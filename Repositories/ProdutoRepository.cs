@@ -2,6 +2,7 @@
 using CatalogoAPI.Models;
 using CatalogoAPI.Pagination;
 using CatalogoAPI.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace CatalogoAPI.Repositories
@@ -10,20 +11,20 @@ namespace CatalogoAPI.Repositories
     {
         public ProdutoRepository(AppDbContext context) : base(context) { }
 
-        public PagedList<Produto> GetAllPaginated(ProdutosParameters produtosParameters)
+        public async Task<PagedList<Produto>> GetAllPaginatedAsync(ProdutosParameters produtosParameters)
         {
-            return PagedList<Produto>.ToPagedList(GET().OrderBy(p => p.Nome),
+            return await PagedList<Produto>.ToPagedListAsync(Get().OrderBy(p => p.Nome),
                 produtosParameters.PageNumber, produtosParameters.PageSize);
         }
 
-        public IEnumerable<Produto> GetProductsByCategoryId(Expression<Func<Produto, bool>> predicate)
+        public IQueryable<Produto> GetProductsByCategoryId(Expression<Func<Produto, bool>> predicate)
         {
-            return GET().Where(predicate);
+            return Get().Where(predicate).AsNoTracking();
         }
 
-        public IEnumerable<Produto> GetProductsBySortLowPrice()
+        public IQueryable<Produto> GetProductsBySortLowPrice()
         {
-            return GET().OrderBy(p => p.Preco).ToList();
+            return Get().OrderBy(p => p.Preco).AsNoTracking();
         }
     }
 }
