@@ -4,6 +4,7 @@ using CatalogoAPI.DTOs.Mappings;
 using CatalogoAPI.Logging;
 using CatalogoAPI.Repositories;
 using CatalogoAPI.Repositories.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -23,6 +24,10 @@ var connectionStringMysql = builder.Configuration.GetConnectionString("DefaultCo
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionStringMysql,
     ServerVersion.AutoDetect(connectionStringMysql)));
+
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
 
 builder.Services.AddScoped<IUnityOfWork, UnityOfWork>();
 
@@ -50,6 +55,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 app.Run();

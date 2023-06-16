@@ -21,7 +21,9 @@ public class Produto
 
     [Display(Name = "Preço do produto")]
     [Required(ErrorMessage = "Preço do produto é obrigatório.")]
-    [Column(TypeName = "decimal(10,2)")]
+    [Column(TypeName = "decimal(8,2)")]
+    [DataType(DataType.Currency)]
+    [Range(1, 1000, ErrorMessage = "Preço deve estar entre {1} e {2}")]
     public decimal Preco { get; set; }
 
     [Display(Name = "Url da foto")]
