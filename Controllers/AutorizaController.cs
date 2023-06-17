@@ -1,6 +1,10 @@
 ﻿using CatalogoAPI.DTOs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace CatalogoAPI.Controllers
 {
@@ -10,12 +14,15 @@ namespace CatalogoAPI.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly IConfiguration _config;
 
         public AutorizaController(UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager)
+            SignInManager<IdentityUser> signInManager,
+            IConfiguration config)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _config = config;
         }
 
         [HttpGet]
@@ -39,7 +46,7 @@ namespace CatalogoAPI.Controllers
             if (result.Succeeded)
             {
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                return Ok("Usuário cadastrado com sucesso!");
+                return Ok(GerarToken(usuarioDTO));
             }
 
             return BadRequest(result.Errors);
@@ -51,12 +58,44 @@ namespace CatalogoAPI.Controllers
             var result = await _signInManager.PasswordSignInAsync(usuarioDTO.UserName,
                 usuarioDTO.Password, isPersistent: false, lockoutOnFailure: false);
 
-            if(result.Succeeded)
+            if (result.Succeeded)
             {
-                return Ok("Usuário logado!");
+                return Ok(GerarToken(usuarioDTO));
             }
 
             return BadRequest("Login inválido!");
+        }
+
+        private UsuarioToken GerarToken(UsuarioDTO usuarioDTO)
+        {
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.UniqueName, usuarioDTO.Email),
+                new Claim("Usuario", usuarioDTO.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            var privateKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var digitalSignature = new SigningCredentials(privateKey, SecurityAlgorithms.HmacSha256);
+
+            var expireHours = _config["TokenConfiguration:ExpireHours"];
+            var expiration = DateTime.UtcNow.AddHours(double.Parse(expireHours));
+
+            JwtSecurityToken jwtSecurityToken = new JwtSecurityToken(
+                issuer: _config["TokenConfiguration:Issuer"],
+                audience: _config["TokenConfiguration:Audience"],
+                claims: claims,
+                expires: expiration,
+                signingCredentials: digitalSignature
+                );
+
+            return new UsuarioToken()
+            {
+                Authenticated = true,
+                Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
+                Expiration = expiration,
+                Message = "Token JWT gerado com sucesso."
+            };
         }
     }
 }
