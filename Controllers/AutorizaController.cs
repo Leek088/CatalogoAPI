@@ -70,16 +70,16 @@ namespace CatalogoAPI.Controllers
         {
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.UniqueName, usuarioDTO.Email),
-                new Claim("Usuario", usuarioDTO.UserName),
+                new Claim(JwtRegisteredClaimNames.UniqueName, usuarioDTO.Email!),
+                new Claim("Usuario", usuarioDTO.UserName!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            var privateKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var privateKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var digitalSignature = new SigningCredentials(privateKey, SecurityAlgorithms.HmacSha256);
 
             var expireHours = _config["TokenConfiguration:ExpireHours"];
-            var expiration = DateTime.UtcNow.AddHours(double.Parse(expireHours));
+            var expiration = DateTime.UtcNow.AddHours(double.Parse(expireHours!));
 
             JwtSecurityToken jwtSecurityToken = new JwtSecurityToken(
                 issuer: _config["TokenConfiguration:Issuer"],

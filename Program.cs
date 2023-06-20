@@ -14,6 +14,16 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "habilitarCORS",
+                      policy =>
+                      {
+                          policy.WithOrigins("https://apirequest.io")
+                          .WithMethods("GET");
+                      });
+});
+
 // Add services to the container.
 builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
@@ -103,6 +113,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
+
+app.UseCors("habilitarCORS");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
