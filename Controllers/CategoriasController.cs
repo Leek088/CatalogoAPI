@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 
 namespace CatalogoAPI.Controllers
 {
+    [ApiVersion("1")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
     [ApiController]
