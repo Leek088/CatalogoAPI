@@ -6,12 +6,14 @@ using CatalogoAPI.Repositories;
 using CatalogoAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
 using System.Text;
-using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,7 @@ builder.Services.AddApiVersioning(options =>
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.DefaultApiVersion = new ApiVersion(1, 0);
     options.ReportApiVersions = true;
+    options.ApiVersionReader = new HeaderApiVersionReader("x-api-version");
 
 });
 
@@ -38,9 +41,30 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(config =>
 {
-    config.SwaggerDoc("v1", new OpenApiInfo { Title = "ApiCatalogo", Version = "V1" });
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";    
+    config.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
+    config.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "ApiCatalogo",
+        Description = "Catalogo de produtos e categorias",
+        TermsOfService = new Uri("https://example.com/terms"),
+        Contact = new OpenApiContact
+        {
+            Name = "Leonardo Nunes",
+            Email = "leonardoleeko88@gmail.com",
+            Url = new Uri("https://example.com/contact")
+        },
+        License = new OpenApiLicense
+        {
+            Name = "Usar sobre LICX",
+            Url = new Uri("https://example.com/license")
+        }
+    });
 
     config.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
     {
@@ -116,7 +140,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ApiCatalogo");
+    });
 }
 
 app.UseHttpsRedirection();

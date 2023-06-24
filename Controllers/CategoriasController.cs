@@ -13,7 +13,8 @@ namespace CatalogoAPI.Controllers
 {
     [ApiVersion("1", Deprecated = true)]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("api/V{version:apiVersion}/[controller]")]
+    //[Route("api/V{version:apiVersion}/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class CategoriasController : ControllerBase
     {
@@ -26,6 +27,33 @@ namespace CatalogoAPI.Controllers
             _mapper = mapper;
         }
 
+        /// <summary>
+        /// Recuperar as Categorias com seus devidos produtos
+        /// </summary>
+        /// <remarks>
+        /// Exemplo de retorno:
+        ///
+        ///     GET /Categorias -> Produtos
+        ///     {
+        ///         "id": 0,
+        ///         "nome": "string",
+        ///         "imagemUrl": "string",
+        ///         "produtos": 
+        ///         [
+        ///             {
+        ///                 "id": 0,
+        ///                 "nome": "string",
+        ///                 "descricao": "string",
+        ///                 "preco": 0,
+        ///                 "imagemUrl": "string",
+        ///                 "categoriaId": 0
+        ///             }
+        ///         ]
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">(200) Retorna com sucesso, a lista de objetos CategoriaDTO</response>
+        /// <response code="404">(404) Retorna "Não encontrado", se a lista for vazia ou nula</response>
         [HttpGet("Produtos")]
         public async Task<ActionResult<IQueryable<CategoriaDTO>>> GetCategoriasComProdutosAsync()
         {
@@ -90,6 +118,24 @@ namespace CatalogoAPI.Controllers
             return StatusCode(StatusCodes.Status200OK, categoriaDTO);
         }
 
+        /// <summary>
+        /// Creates a TodoItem.
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns>A newly created TodoItem</returns>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /Todo
+        ///     {
+        ///        "id": 1,
+        ///        "name": "Item #1",
+        ///        "isComplete": true
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="201">Returns the newly created item</response>
+        /// <response code="400">If the item is null</response>
         [HttpPost]
         public async Task<ActionResult<CategoriaDTO>> PostAsync(CategoriaDTO categoriaDTO)
         {
