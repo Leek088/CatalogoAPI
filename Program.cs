@@ -7,6 +7,7 @@ using CatalogoAPI.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -17,54 +18,29 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+/* Versionamento da API no Swagger */
 builder.Services.AddApiVersioning(options =>
 {
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.DefaultApiVersion = new ApiVersion(1, 0);
     options.ReportApiVersions = true;
-    options.ApiVersionReader = new HeaderApiVersionReader("x-api-version");
-
+    options.ApiVersionReader = ApiVersionReader.Combine(new UrlSegmentApiVersionReader(),
+                                new HeaderApiVersionReader("x-api-version"),
+                                new MediaTypeApiVersionReader("x-api-version"));
 });
 
-builder.Services.AddCors(options =>
+builder.Services.AddVersionedApiExplorer(setup =>
 {
-    options.AddPolicy(name: "habilitarCORS",
-                      policy =>
-                      {
-                          policy.WithOrigins("https://apirequest.io")
-                          .WithMethods("GET");
-                      });
+    setup.GroupNameFormat = "'v'VVV";
+    setup.SubstituteApiVersionInUrl = true;
 });
 
-// Add services to the container.
-builder.Services.AddControllers().AddJsonOptions(options =>
-    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
-
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 
 builder.Services.AddSwaggerGen(config =>
 {
-    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";    
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     config.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
-
-    config.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Version = "v1",
-        Title = "ApiCatalogo",
-        Description = "Catalogo de produtos e categorias",
-        TermsOfService = new Uri("https://example.com/terms"),
-        Contact = new OpenApiContact
-        {
-            Name = "Leonardo Nunes",
-            Email = "leonardoleeko88@gmail.com",
-            Url = new Uri("https://example.com/contact")
-        },
-        License = new OpenApiLicense
-        {
-            Name = "Usar sobre LICX",
-            Url = new Uri("https://example.com/license")
-        }
-    });
 
     config.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
     {
@@ -92,6 +68,22 @@ builder.Services.AddSwaggerGen(config =>
             }
     });
 });
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "habilitarCORS",
+                      policy =>
+                      {
+                          policy.WithOrigins("https://apirequest.io")
+                          .WithMethods("GET");
+                      });
+});
+
+// Add services to the container.
+builder.Services.AddControllers().AddJsonOptions(options =>
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+
+builder.Services.AddEndpointsApiExplorer();
 
 //Recuperar string de conexão
 var connectionStringMysql = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -135,6 +127,7 @@ IMapper mapper = mappingConfig.CreateMapper();
 builder.Services.AddSingleton(mapper);
 
 var app = builder.Build();
+var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -142,7 +135,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ApiCatalogo");
+        foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
+        {
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+                description.GroupName.ToUpperInvariant());
+        }
     });
 }
 
@@ -156,4 +153,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
 app.Run();

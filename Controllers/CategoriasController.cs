@@ -11,11 +11,12 @@ using Newtonsoft.Json;
 
 namespace CatalogoAPI.Controllers
 {
+    [Produces("application/json")]
     [ApiVersion("1", Deprecated = true)]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    //[Route("api/V{version:apiVersion}/[controller]")]
-    [Route("api/v1/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]    
     [ApiController]
+    [ApiConventionType(typeof(DefaultApiConventions))]
     public class CategoriasController : ControllerBase
     {
         private readonly IUnityOfWork _unityOfWork;
@@ -28,12 +29,12 @@ namespace CatalogoAPI.Controllers
         }
 
         /// <summary>
-        /// Recuperar as Categorias com seus devidos produtos
+        /// Recupera as Categorias com seus devidos produtos
         /// </summary>
         /// <remarks>
         /// Exemplo de retorno:
         ///
-        ///     GET /Categorias -> Produtos
+        ///     GET api/v1/Categorias/Produtos
         ///     {
         ///         "id": 0,
         ///         "nome": "string",
@@ -50,11 +51,10 @@ namespace CatalogoAPI.Controllers
         ///             }
         ///         ]
         ///     }
-        ///
         /// </remarks>
         /// <response code="200">(200) Retorna com sucesso, a lista de objetos CategoriaDTO</response>
-        /// <response code="404">(404) Retorna "Não encontrado", se a lista for vazia ou nula</response>
-        [HttpGet("Produtos")]
+        /// <response code="404">(404) Retorna "Não encontrado", se a lista for vazia ou nula</response>        
+        [HttpGet("Produtos")]        
         public async Task<ActionResult<IQueryable<CategoriaDTO>>> GetCategoriasComProdutosAsync()
         {
             var categoriasDB = await _unityOfWork.CategoriaRepository.GetCategoriasComProdutos().ToListAsync();
@@ -68,6 +68,22 @@ namespace CatalogoAPI.Controllers
             return StatusCode(StatusCodes.Status200OK, categoriasDTO);
         }
 
+        /// <summary>
+        /// Recupera todas as Categorias do banco
+        /// </summary>
+        /// <remarks>
+        /// Exemplo de retorno:
+        ///
+        ///     GET api/v1/Categorias/
+        ///     {
+        ///         "id": 0,
+        ///         "nome": "string",
+        ///         "imagemUrl": "string",
+        ///         "produtos": []
+        ///     }
+        /// </remarks>
+        /// <response code="200">(200) Retorna com sucesso, a lista de objetos CategoriaDTO</response>
+        /// <response code="404">(404) Retorna "Não encontrado", se a lista for vazia ou nula</response>
         [HttpGet]
         public async Task<ActionResult<IQueryable<CategoriaDTO>>> GetAsync()
         {
@@ -82,10 +98,29 @@ namespace CatalogoAPI.Controllers
             return Ok(categoriasDTO);
         }
 
+        /// <summary>
+        /// Recupera as Categorias baseado na paginação
+        /// </summary>
+        /// <remarks>        
+        /// Exemplo de retorno
+        ///
+        ///     GET api/v1/Categorias/Paginada
+        ///     {
+        ///         "id": 0,
+        ///         "nome": "string",
+        ///         "imagemUrl": "string",
+        ///         "produtos": []
+        ///     }
+        /// </remarks>
+        /// <response code="200">(200) Retorna com sucesso, a lista de objetos CategoriaDTO</response>
+        /// <response code="404">(404) Retorna "Não encontrado", se a lista for vazia ou nula</response>
         [HttpGet("Paginada")]
         public async Task<ActionResult<IQueryable<CategoriaDTO>>> GetCategoryPaginatedAsync([FromQuery] CategoriaParameters categoriaParameters)
         {
             var categorias = await _unityOfWork.CategoriaRepository.GetAllPaginatedAsync(categoriaParameters);
+
+            if (categorias is null)
+                return NotFound();
 
             var metadata = new
             {
@@ -104,8 +139,25 @@ namespace CatalogoAPI.Controllers
             return Ok(categoriasDTO);
         }
 
+        /// <summary>
+        /// Recupera as Categorias baseado no ID
+        /// </summary>
+        /// <param name="id">ID da categoria</param>
+        /// <remarks>        
+        /// Exemplo de retorno:
+        ///
+        ///     GET api/v1/Categorias/{id}
+        ///     {
+        ///         "id": 0,
+        ///         "nome": "string",
+        ///         "imagemUrl": "string",
+        ///         "produtos": []
+        ///     }
+        /// </remarks>
+        /// <response code="200">(200) Retorna com sucesso, a lista de objetos CategoriaDTO</response>
+        /// <response code="404">(404) Retorna "Não encontrado", se a lista for vazia ou nula</response>
         [HttpGet("{id:int}", Name = "RecuperarCategoriaPorId")]
-        public async Task<ActionResult<CategoriaDTO>> GetAsync(int id)
+        public async Task<ActionResult<CategoriaDTO>> GetAsyncById(int id)
         {
             var categoriaDB = await _unityOfWork.CategoriaRepository.GetByIdAsync(c => c.Id == id);
 
@@ -119,28 +171,24 @@ namespace CatalogoAPI.Controllers
         }
 
         /// <summary>
-        /// Creates a TodoItem.
+        /// Cria uma nova categoria
         /// </summary>
-        /// <param name="item"></param>
-        /// <returns>A newly created TodoItem</returns>
         /// <remarks>
-        /// Sample request:
+        /// Exemplo de requisição, enviando uma categoriaDTO:
         ///
-        ///     POST /Todo
+        ///     POST /api/v1/Categorias
         ///     {
-        ///        "id": 1,
-        ///        "name": "Item #1",
-        ///        "isComplete": true
-        ///     }
-        ///
+        ///         "nome": "categoria nome",
+        ///         "imagemUrl": "imagem.jpg"
+        ///     }        
         /// </remarks>
-        /// <response code="201">Returns the newly created item</response>
-        /// <response code="400">If the item is null</response>
+        /// <response code="201">(201) Retorna uma nova categoriaDTO criada</response>
+        /// <response code="400">(400) categoriaDTO recebida é nula</response>
         [HttpPost]
         public async Task<ActionResult<CategoriaDTO>> PostAsync(CategoriaDTO categoriaDTO)
         {
             if (categoriaDTO is null)
-                return BadRequest();
+                return StatusCode(StatusCodes.Status400BadRequest);
 
             var categoriaDB = _mapper.Map<Categoria>(categoriaDTO);
 
@@ -149,9 +197,15 @@ namespace CatalogoAPI.Controllers
 
             categoriaDTO = _mapper.Map<CategoriaDTO>(categoriaDB);
 
-            return StatusCode(StatusCodes.Status200OK, categoriaDTO);
+            return StatusCode(StatusCodes.Status201Created, categoriaDTO);
         }
 
+        /// <summary>
+        /// Atualiza uma categoria por ID
+        /// </summary>
+        /// <param name="id">ID da categoria</param>
+        /// <param name="categoriaDTO">Parametros da categoria a ser atualizada</param>
+        /// <returns>Retorna a categoria atualizada</returns>
         [HttpPut("{id:int}")]
         public async Task<ActionResult<CategoriaDTO>> PutAsync(int id, CategoriaDTO categoriaDTO)
         {
@@ -169,6 +223,13 @@ namespace CatalogoAPI.Controllers
                 new { id = categoriaDTO.Id }, categoriaDTO);
         }
 
+        /// <summary>
+        /// Deleta uma categoria por ID
+        /// </summary>
+        /// <param name="id">ID da categoria</param>
+        /// <returns>Retorna a categoriaDTO que foi deletada</returns>
+        /// <response code="200">(200) Retorna a categoriaDTO deletada</response>
+        /// <response code="404">(404) Id da Categoria a ser deletada, não foi encontrada</response>
         [HttpDelete("{id:int}")]
         public async Task<ActionResult<CategoriaDTO>> DeleteAsync(int id)
         {

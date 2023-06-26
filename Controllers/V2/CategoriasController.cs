@@ -2,11 +2,18 @@
 
 namespace CatalogoAPI.Controllers.V2
 {
-    [ApiVersion("2")]    
-    [Route("api/V2/[controller]")]
+    [Produces("application/json")]
+    [ApiVersion("2.0")]    
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     public class CategoriasController : ControllerBase
     {
+
+        /// <summary>
+        /// Acessa a api V2 como teste
+        /// </summary>
+        /// <remarks>Um teste para verificar se a API v2 está funionando.</remarks>
+        /// <returns>Retorna uma string de teste para verificar o funcionamento da API</returns>
         [HttpGet]
         public ActionResult<string> Get()
         {
